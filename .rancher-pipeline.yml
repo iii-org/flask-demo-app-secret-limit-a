@@ -42,7 +42,7 @@ stages:
         rancher kubectl config view > config && ls && cat config && 
         cp config /opt/config && export KUBECONFIG="/opt/config" && 
         kubectl config set-cluster iiidevops-k8s --insecure-skip-tls-verify=true &&
-        cat config   
+        cat /opt/config   
     envFrom:
     - sourceKey: API_TOKEN
       sourceName: pipeline-api-key
