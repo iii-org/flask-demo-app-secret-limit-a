@@ -40,8 +40,7 @@ stages:
       image: iiiorg/rancher-cli:v2.4.6
       shellScript: rancher login ${rancher_url} -t ${rancher_api_token} --skip-verify && 
         rancher kubectl config set-cluster iiidevops-k8s --insecure-skip-tls-verify=true &&
-        rancher kubectl config view > config && ls && cat config &&
-        
+        rancher kubectl config view > config && ls && cat config       
     envFrom:
     - sourceKey: API_TOKEN
       sourceName: pipeline-api-key
