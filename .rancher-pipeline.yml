@@ -53,7 +53,7 @@ stages:
       image: alpine/helm:3.5.1
       shellScript: cp config /opt/config && export KUBECONFIG="/opt/config" && 
         helm list -n ${CICD_GIT_REPO_NAME} && 
-        helm repo add iiiorg https://raw.githubusercontent.com/iii-org/devops-charts/main/ &&
+        helm repo add iiiorg https://reg.406.csie.nuu.edu.tw/chartrepo/iii-org &&
         helm upgrade -i --history-max 1 --timeout 3600s --wait --wait-for-jobs 
         --description "${CICD_GIT_REPO_NAME}-${CICD_GIT_BRANCH}-cmx"
         --set git.branch=${CICD_GIT_BRANCH} --set git.commitID=${CICD_GIT_COMMIT} 
@@ -67,7 +67,7 @@ stages:
       image: alpine/helm:3.5.1
       shellScript: cp config /opt/config && export KUBECONFIG="/opt/config" && 
         helm list -n ${CICD_GIT_REPO_NAME} && 
-        helm repo add iiiorg https://raw.githubusercontent.com/iii-org/devops-charts/main/ &&
+        helm repo add iiiorg https://reg.406.csie.nuu.edu.tw/chartrepo/iii-org &&
         helm upgrade -i --history-max 1 --timeout 3600s --wait --wait-for-jobs 
         --description "${CICD_GIT_REPO_NAME}-${CICD_GIT_BRANCH}-serv"
         --set git.branch=${CICD_GIT_BRANCH} --set git.commitID=${CICD_GIT_COMMIT} 
