@@ -49,6 +49,7 @@ stages:
       sourceName: rancher
       targetKey: rancher_url
 - name: Create k8s Command env
+  steps: 
   - runScriptConfig:
       image: alpine/kubectl
       shellScript: cp config /opt/config && export KUBECONFIG="/opt/config" && 
