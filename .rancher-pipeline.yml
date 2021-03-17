@@ -57,7 +57,7 @@ stages:
       shellScript: mv config /opt/config && export KUBECONFIG="/opt/config" && 
         helm list -n ${CICD_GIT_REPO_NAME} && 
         helm repo add iiiorg https://github.com/iii-org/devops-charts.git
-        helm upgrade --install --history-max 1 --timeout 3600s --wait --wait-for-jobs 
+        helm upgrade -i --history-max 1 --timeout 3600s --wait --wait-for-jobs 
         --description "${CICD_GIT_REPO_NAME}-${CICD_GIT_BRANCH}-cmx"
         --set git.branch=${CICD_GIT_BRANCH} --set git.commitID=${CICD_GIT_COMMIT} 
         --set git.repoName=${CICD_GIT_REPO_NAME} --set git.url=${CICD_GIT_URL}
