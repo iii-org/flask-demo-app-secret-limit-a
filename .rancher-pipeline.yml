@@ -48,6 +48,12 @@ stages:
     - sourceKey: rancher-url
       sourceName: rancher
       targetKey: rancher_url
+- name: Create k8s Command env
+  - runScriptConfig:
+      image: alpine/kubectl
+      shellScript: cp config /opt/config && export KUBECONFIG="/opt/config" && 
+        kubectl config set-cluster iiidevops-k8s --insecure-skip-tls-verify=true && 
+        kubectl config view 
   - runScriptConfig:
       image: alpine/helm:3.5.1
       shellScript: mv config /opt/config && export KUBECONFIG="/opt/config" && 
