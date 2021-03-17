@@ -40,9 +40,6 @@ stages:
       image: iiiorg/rancher-cli:v2.4.6
       shellScript: rancher login ${rancher_url} -t ${rancher_api_token} --skip-verify && 
         rancher kubectl config view --flatten=true > config && ls && cat config
-        #cp config /opt/config && export KUBECONFIG="/opt/config" && 
-        #kubectl config set-cluster iiidevops-k8s --insecure-skip-tls-verify=true &&
-        #cat /opt/config && cp /opt/config config-fix
     envFrom:
     - sourceKey: API_TOKEN
       sourceName: pipeline-api-key
@@ -50,7 +47,7 @@ stages:
     - sourceKey: rancher-url
       sourceName: rancher
       targetKey: rancher_url
-- name: Create k8s Command env
+- name: Test--Checkmarx source code scan
   steps: 
   - runScriptConfig:
       image: alpine/helm:3.5.1
@@ -64,71 +61,30 @@ stages:
         --set pipeline.sequence=${CICD_EXECUTION_SEQUENCE}
         --version 0.1.0 -n ${CICD_GIT_REPO_NAME} ${CICD_GIT_REPO_NAME}-${CICD_GIT_BRANCH}-cmx
         iiiorg/scan-checkmarx
-
-- name: Test--Checkmarx source code scan And Web deploy
-  steps:
-  - runScriptConfig:
-      image: iiiorg/rancher-cli:v2.4.6
-      shellScript: rancher login ${rancher_url} -t ${rancher_api_token} --skip-verify && 
-        rancher kubectl config view > config && ls && cat config && 
-        rancher app upgrade --install --history-max 1 --timeout 3600 --wait --wait-for-jobs 
-        --description "${CICD_GIT_REPO_NAME}-${CICD_GIT_BRANCH}-cmx"
-        --set git.branch=${CICD_GIT_BRANCH} --set git.commitID=${CICD_GIT_COMMIT} 
-        --set git.repoName=${CICD_GIT_REPO_NAME} --set git.url=${CICD_GIT_URL}
-        --set pipeline.sequence=${CICD_EXECUTION_SEQUENCE}
-        --version 0.1.0 -n ${CICD_GIT_REPO_NAME} ${CICD_GIT_REPO_NAME}-${CICD_GIT_BRANCH}-cmx
-    envFrom:
-    - sourceKey: API_TOKEN
-      sourceName: pipeline-api-key
-      targetKey: rancher_api_token
-    - sourceKey: rancher-url
-      sourceName: rancher
-      targetKey: rancher_url
-  when:
-    branch:
-      include:
-      - master
-      - checkmarx
-
-- name: Test--Checkmarx source code scan
-  steps:
-  - applyAppConfig:
-      answers:
-        git.branch: ${CICD_GIT_BRANCH}
-        git.commitID: ${CICD_GIT_COMMIT}
-        git.repoName: ${CICD_GIT_REPO_NAME}
-        git.url: ${CICD_GIT_URL}
-        pipeline.sequence: ${CICD_EXECUTION_SEQUENCE}
-      catalogTemplate: cattle-global-data:iii-dev-charts3-scan-checkmarx
-      name: ${CICD_GIT_REPO_NAME}-${CICD_GIT_BRANCH}-cmx
-      targetNamespace: ${CICD_GIT_REPO_NAME}
-      version: 0.1.0
-  when:
-    branch:
-      include:
-      - master
-      - checkmarx
 - name: Deploy--Web
   steps:
-  - applyAppConfig:
-      answers:
-        git.branch: ${CICD_GIT_BRANCH}
-        git.commitID: ${CICD_GIT_COMMIT}
-        git.repoName: ${CICD_GIT_REPO_NAME}
-        git.url: ${CICD_GIT_URL}
-        harbor.host: harbor-demo.iiidevops.org
-        pipeline.sequence: ${CICD_EXECUTION_SEQUENCE}
-        web.imageTag: ${CICD_GIT_REPO_NAME}/${CICD_GIT_BRANCH}:latest
-        web.port: 5000
-      catalogTemplate: cattle-global-data:iii-dev-charts3-web
-      name: ${CICD_GIT_REPO_NAME}-${CICD_GIT_BRANCH}-serv
-      targetNamespace: ${CICD_GIT_REPO_NAME}
-      version: 0.5.0
+  - runScriptConfig:
+      image: alpine/helm:3.5.1
+      shellScript: mv config /opt/config && export KUBECONFIG="/opt/config" && 
+        helm list -n ${CICD_GIT_REPO_NAME} && 
+        helm repo add iiiorg https://github.com/iii-org/devops-charts &&
+        helm upgrade -i --history-max 1 --timeout 3600s --wait --wait-for-jobs 
+        --description "${CICD_GIT_REPO_NAME}-${CICD_GIT_BRANCH}-serv"
+        --set git.branch=${CICD_GIT_BRANCH} --set git.commitID=${CICD_GIT_COMMIT} 
+        --set git.repoName=${CICD_GIT_REPO_NAME} --set git.url=${CICD_GIT_URL}
+        --set harbor.host=harbor-demo.iiidevops.org 
+        --set pipeline.sequence=${CICD_EXECUTION_SEQUENCE}
+        --set web.imageTag=${CICD_GIT_REPO_NAME}/${CICD_GIT_BRANCH}:latest
+        --set web.port=5000
+        --version 0.5.1 -n ${CICD_GIT_REPO_NAME} ${CICD_GIT_REPO_NAME}-${CICD_GIT_BRANCH}-serv
+        iiiorg/web
     when:
       branch:
         include:
         - master
         - develop
+
+
 - name: Deploy--Wait Web deployment
   steps:
   - env:
