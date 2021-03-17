@@ -1,0 +1,117 @@
+stages:
+- name: Build--build and push docker image
+  steps:
+  - env:
+      PLUGIN_BUILD_ARGS: --progress=tty --network=host
+      PLUGIN_DEBUG: 'true'
+      PLUGIN_INSECURE: 'true'
+      PLUGIN_MIRROR: https://harbor-demo.iiidevops.org
+      PLUGIN_MTU: '1000'
+    publishImageConfig:
+      buildContext: .
+      dockerfilePath: ./Dockerfile
+      pushRemote: true
+      registry: harbor-demo.iiidevops.org
+      tag: ${CICD_GIT_REPO_NAME}/${CICD_GIT_BRANCH}:latest
+    when:
+      branch:
+        include:
+        - master
+        - develop
+- name: Test--Checkmarx source code scan
+  steps:
+  - applyAppConfig:
+      answers:
+        git.branch: ${CICD_GIT_BRANCH}
+        git.commitID: ${CICD_GIT_COMMIT}
+        git.repoName: ${CICD_GIT_REPO_NAME}
+        git.url: ${CICD_GIT_URL}
+        pipeline.sequence: ${CICD_EXECUTION_SEQUENCE}
+      catalogTemplate: cattle-global-data:iii-dev-charts3-scan-checkmarx
+      name: ${CICD_GIT_REPO_NAME}-${CICD_GIT_BRANCH}-cmx
+      targetNamespace: ${CICD_GIT_REPO_NAME}
+      version: 0.1.0
+  when:
+    branch:
+      include:
+      - master
+      - checkmarx
+- name: Deploy--Web
+  steps:
+  - applyAppConfig:
+      answers:
+        git.branch: ${CICD_GIT_BRANCH}
+        git.commitID: ${CICD_GIT_COMMIT}
+        git.repoName: ${CICD_GIT_REPO_NAME}
+        git.url: ${CICD_GIT_URL}
+        harbor.host: harbor-demo.iiidevops.org
+        pipeline.sequence: ${CICD_EXECUTION_SEQUENCE}
+        web.imageTag: ${CICD_GIT_REPO_NAME}/${CICD_GIT_BRANCH}:latest
+        web.port: 5000
+      catalogTemplate: cattle-global-data:iii-dev-charts3-web
+      name: ${CICD_GIT_REPO_NAME}-${CICD_GIT_BRANCH}-serv
+      targetNamespace: ${CICD_GIT_REPO_NAME}
+      version: 0.5.0
+    when:
+      branch:
+        include:
+        - master
+        - develop
+- name: Deploy--Wait Web deployment
+  steps:
+  - env:
+      deploy_name: ${CICD_GIT_REPO_NAME}-${CICD_GIT_BRANCH}-serv
+      max_wait: 128
+      namespace: ${CICD_GIT_REPO_NAME}
+    envFrom:
+    - sourceKey: API_TOKEN
+      sourceName: pipeline-api-key
+      targetKey: rancher_api_token
+    - sourceKey: rancher-url
+      sourceName: rancher
+      targetKey: rancher_url
+    runScriptConfig:
+      image: iiiorg/deployment-waiter:0.0.2
+      shellScript: rancher login ${rancher_url} -t ${rancher_api_token} --skip-verify;
+        bash /app/run.sh
+    when:
+      branch:
+        include:
+        - master
+- name: Test--Postman
+  steps:
+  - applyAppConfig:
+      answers:
+        git.branch: ${CICD_GIT_BRANCH}
+        git.commitID: ${CICD_GIT_COMMIT}
+        git.repoName: ${CICD_GIT_REPO_NAME}
+        git.url: ${CICD_GIT_URL}
+        pipeline.sequence: ${CICD_EXECUTION_SEQUENCE}
+        web.deployName: ${CICD_GIT_REPO_NAME}-${CICD_GIT_BRANCH}-serv
+        web.port: 5000
+      catalogTemplate: cattle-global-data:iii-dev-charts3-test-postman
+      name: ${CICD_GIT_REPO_NAME}-${CICD_GIT_BRANCH}-pm
+      targetNamespace: ${CICD_GIT_REPO_NAME}
+      version: 0.1.0
+  when:
+    branch:
+      include:
+      - master
+- name: Test--Webinspect
+  steps:
+  - applyAppConfig:
+      answers:
+        git.branch: ${CICD_GIT_BRANCH}
+        git.commitID: ${CICD_GIT_COMMIT}
+        git.repoName: ${CICD_GIT_REPO_NAME}
+        git.url: ${CICD_GIT_URL}
+        pipeline.sequence: ${CICD_EXECUTION_SEQUENCE}
+        web.deployName: ${CICD_GIT_REPO_NAME}-${CICD_GIT_BRANCH}-serv
+      catalogTemplate: cattle-global-data:iii-dev-charts3-test-webinspect
+      name: ${CICD_GIT_REPO_NAME}-${CICD_GIT_BRANCH}-wi
+      targetNamespace: ${CICD_GIT_REPO_NAME}
+      version: 0.1.0
+  when:
+    branch:
+      include:
+      - master
