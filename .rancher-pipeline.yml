@@ -54,7 +54,7 @@ stages:
   steps: 
   - runScriptConfig:
       image: alpine/helm:3.5.1
-      shellScript: mv config /opt/config && export KUBECONFIG="/opt/config" && 
+      shellScript: mv config-fix /opt/config && export KUBECONFIG="/opt/config" && 
         helm list -n ${CICD_GIT_REPO_NAME} && 
         helm upgrade --install --history-max 1 --timeout 3600 --wait --wait-for-jobs 
         --description "${CICD_GIT_REPO_NAME}-${CICD_GIT_BRANCH}-cmx"
