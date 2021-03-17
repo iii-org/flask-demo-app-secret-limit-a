@@ -51,7 +51,7 @@ stages:
 - name: Create k8s Command env
   steps: 
   - runScriptConfig:
-      image: bitnami/kubectl
+      image: roffe/kubectl
       shellScript: cp config /opt/config && export KUBECONFIG="/opt/config" && 
         kubectl config set-cluster iiidevops-k8s --insecure-skip-tls-verify=true && 
         kubectl config view > config && cat config 
