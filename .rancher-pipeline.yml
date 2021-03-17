@@ -39,10 +39,10 @@ stages:
   - runScriptConfig:
       image: iiiorg/rancher-cli:v2.4.6
       shellScript: rancher login ${rancher_url} -t ${rancher_api_token} --skip-verify && 
-        rancher kubectl config view --flatten=true > config && ls && cat config && 
-        cp config /opt/config && export KUBECONFIG="/opt/config" && 
-        kubectl config set-cluster iiidevops-k8s --insecure-skip-tls-verify=true &&
-        cat /opt/config && cp /opt/config config-fix
+        rancher kubectl config view --flatten=true > config && ls && cat config
+        #cp config /opt/config && export KUBECONFIG="/opt/config" && 
+        #kubectl config set-cluster iiidevops-k8s --insecure-skip-tls-verify=true &&
+        #cat /opt/config && cp /opt/config config-fix
     envFrom:
     - sourceKey: API_TOKEN
       sourceName: pipeline-api-key
@@ -54,7 +54,7 @@ stages:
   steps: 
   - runScriptConfig:
       image: alpine/helm:3.5.1
-      shellScript: mv config-fix /opt/config && export KUBECONFIG="/opt/config" && 
+      shellScript: mv config /opt/config && export KUBECONFIG="/opt/config" && 
         helm list -n ${CICD_GIT_REPO_NAME} && 
         helm upgrade --install --history-max 1 --timeout 3600 --wait --wait-for-jobs 
         --description "${CICD_GIT_REPO_NAME}-${CICD_GIT_BRANCH}-cmx"
